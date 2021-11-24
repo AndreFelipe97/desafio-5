@@ -1,4 +1,10 @@
 import { MovieCard } from "./MovieCard";
+import {
+  CellMeasurer,
+  CellMeasurerCache,
+  createMasonryCellPositioner,
+  Masonry
+} from "react-virtualized";
 
 interface ContentProps {
   selectedGenre: {
@@ -19,7 +25,36 @@ interface ContentProps {
   }>;
 }
 
+const cache = new CellMeasurerCache({
+  defaultHeight: 250,
+  defaultWidth: 250,
+  fixedWidth: true,
+});
+
+// Our masonry layout will use 3 columns with a 10px gutter between
+const cellPositioner = createMasonryCellPositioner({
+  cellMeasurerCache: cache,
+  columnCount: 3,
+  columnWidth: 300,
+  spacer: 10,
+});
+
 export function Content({ selectedGenre, movies }: ContentProps) {
+  function cellRenderer({index, key, parent, style}) {  
+    return (
+      <CellMeasurer cache={cache} index={index} key={key} parent={parent}>
+        <div style={style}>
+          <MovieCard
+            title={movies[index].Title}
+            poster={movies[index].Poster}
+            runtime={movies[index].Runtime}
+            rating={movies[index].Ratings[0].Value}
+          />
+        </div>
+      </CellMeasurer>
+    );
+  }
+
   return (
     <div className="container">
       <header>
@@ -27,11 +62,16 @@ export function Content({ selectedGenre, movies }: ContentProps) {
       </header>
 
       <main>
-        <div className="movies-list">
-          {movies.map(movie => (
-            <MovieCard key={movie.imdbID} title={movie.Title} poster={movie.Poster} runtime={movie.Runtime} rating={movie.Ratings[0].Value} />
-          ))}
-        </div>
+          <div className="movies-list" >
+          <Masonry
+            cellCount={movies.length}
+            cellMeasurerCache={cache}
+            cellPositioner={cellPositioner}
+            cellRenderer={cellRenderer}
+            height={900}
+            width={1000}
+          />,
+          </div>
       </main>
     </div>
   )
